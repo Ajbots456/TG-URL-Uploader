@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# (c) Shrimadhav U K
+# (c) Shrimadhav U K | @Edit By Hash Minner
 
 # the logging things
 import logging
@@ -9,29 +9,26 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger(__name__)
 
 import os
+import asyncio
 import sqlite3
 
 # the secret configuration specific things
-if bool(os.environ.get("WEBHOOK", False)):
-    from sample_config import Config
-else:
-    from config import Config
+from sample_config import Config
 
 # the Strings used for this "thing"
 from translation import Translation
-
-import pyrogram
+from pyrogram import Client as Clinton
+from pyrogram import filters
+from database.adduser import AddUser
+from pyrogram.types import Message
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
-def GetExpiryDate(chat_id):
-    expires_at = (str(chat_id), "Source Cloned User", "1970.01.01.12.00.00")
-    Config.AUTH_USERS.add(683538773)
-    return expires_at
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-@pyrogram.Client.on_message(pyrogram.filters.command(["help", "about"]))
+@Clinton.on_message(filters.private & filters.command(["help"]))
 async def help_user(bot, update):
-    # logger.info(update)
+    await AddUser(bot, update)
     await bot.send_message(
         chat_id=update.chat.id,
         text=Translation.HELP_USER,
@@ -41,37 +38,18 @@ async def help_user(bot, update):
     )
 
 
-@pyrogram.Client.on_message(pyrogram.filters.command(["me"]))
-async def get_me_info(bot, update):
-    # logger.info(update)
-    chat_id = str(update.from_user.id)
-    chat_id, plan_type, expires_at = GetExpiryDate(chat_id)
-    await bot.send_message(
-        chat_id=update.chat.id,
-        text=Translation.CURENT_PLAN_DETAILS.format(chat_id, plan_type, expires_at),
-        parse_mode="html",
-        disable_web_page_preview=True,
-        reply_to_message_id=update.message_id
-    )
-
-
-@pyrogram.Client.on_message(pyrogram.filters.command(["start"]))
-async def start(bot, update):
-    # logger.info(update)
-    await bot.send_message(
-        chat_id=update.chat.id,
-        text=Translation.START_TEXT,
-        reply_to_message_id=update.message_id
-    )
-
-
-@pyrogram.Client.on_message(pyrogram.filters.command(["upgrade"]))
-async def upgrade(bot, update):
-    # logger.info(update)
-    await bot.send_message(
-        chat_id=update.chat.id,
-        text=Translation.UPGRADE_TEXT,
-        parse_mode="html",
-        reply_to_message_id=update.message_id,
-        disable_web_page_preview=True
-    )
+@Clinton.on_message(filters.private & filters.command(["start"]))
+async def start(bot, message):
+  await bot.send_message(
+    chat_id=message.chat.id,
+    text=Translation.START_TEXT.format(message.from_user.mention),
+    reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("Comment", url="https://t.me/MoviesSeries_DiscussionGroup"),
+                    InlineKeyboardButton("🤖 Updates", url="https://t.me/Moviesseriesnewchannel")
+                ]
+            ]
+        ),
+    reply_to_message_id=message.message_id
+  )
